@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
+	"dayplanner/internal/domain"
 	"dayplanner/internal/model"
 )
 
@@ -23,28 +24,60 @@ var (
 	fieldInactive = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#6C7086"))
 
+	pickerOverlay = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("#89B4FA")).
+			Padding(0, 1)
+
+	pickerSelected = lipgloss.NewStyle().
+			Background(lipgloss.Color("#313244")).
+			Foreground(lipgloss.Color("#CDD6F4")).
+			Bold(true)
+
+	pickerNormal = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#6C7086"))
+
 	chainItem = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#A6E3A1"))
+
+	depTag = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#A6E3A1"))
+
+	depRemove = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#F38BA8"))
 )
 
-var formFields = []string{"Tag", "Name", "Priority", "Goal", "DependsOn", "Notes"}
+var priorities = []string{
+	string(domain.PriorityHigh),
+	string(domain.PriorityMedium),
+	string(domain.PriorityLow),
+}
 
 func RenderAddEdit(m model.Model) string {
 	var b strings.Builder
 
 	title := "New Task"
 	if m.Form.EditingID != "" {
-		title = "Edit Task · " + m.Form.EditingID
+		title = "Edit · " + m.Form.EditingID
+	}
+	if m.Form.IsChain {
+		title += "  (chain mode)"
 	}
 	b.WriteString(RenderHeader(title))
 
 	if m.Form.IsChain && len(m.Form.ChainIDs) > 0 {
-		b.WriteString(renderChainProgress(m.Form.ChainIDs) + "\n")
+		b.WriteString(renderChainProgress(m.Form.ChainIDs) + "\n\n")
 	}
 
-	for i, name := range formFields {
-		value := fieldValue(m.Form, i)
-		b.WriteString(renderField(name, value, i == m.Form.FocusIndex))
+	b.WriteString(renderFormField("Tag", m.Form.Tag, m.Form.FocusIndex == model.FieldTag, false))
+	b.WriteString(renderFormField("Name", m.Form.Name, m.Form.FocusIndex == model.FieldName, false))
+	b.WriteString(renderPriorityField(m))
+	b.WriteString(renderFormField("Goal", m.Form.Goal, m.Form.FocusIndex == model.FieldGoal, false))
+	b.WriteString(renderDepsField(m))
+	b.WriteString(renderFormField("Notes", m.Form.Notes, m.Form.FocusIndex == model.FieldNotes, false))
+
+	if m.Form.PickerOpen() {
+		b.WriteString("\n" + renderPicker(m.Form.Picker))
 	}
 
 	if m.Err != nil {
@@ -55,15 +88,81 @@ func RenderAddEdit(m model.Model) string {
 	return b.String()
 }
 
-func renderField(label, value string, active bool) string {
+func renderFormField(label, value string, active, readonly bool) string {
 	l := fieldLabel.Render(label + ":")
 	var v string
-	if active {
+	switch {
+	case readonly:
+		v = fieldInactive.Render(value)
+	case active:
 		v = fieldActive.Render(value + "█")
-	} else {
+	default:
 		v = fieldInactive.Render(value)
 	}
 	return fmt.Sprintf("%s  %s\n", l, v)
+}
+
+func renderPriorityField(m model.Model) string {
+	active := m.Form.FocusIndex == model.FieldPriority
+	value := string(m.Form.Priority)
+	if value == "" {
+		value = "(select)"
+	}
+	badge := PriorityBadge(value)
+	l := fieldLabel.Render("Priority:")
+	indicator := ""
+	if active {
+		indicator = Dimmed.Render("  enter to open")
+	}
+	return fmt.Sprintf("%s  %s%s\n", l, badge, indicator)
+}
+
+func renderDepsField(m model.Model) string {
+	active := m.Form.FocusIndex == model.FieldDeps
+	l := fieldLabel.Render("DependsOn:")
+
+	var depParts []string
+	for _, id := range m.Form.DependsOn {
+		depParts = append(depParts, depTag.Render(id)+depRemove.Render(" ✕"))
+	}
+
+	var value string
+	if len(depParts) == 0 {
+		value = fieldInactive.Render("(none)")
+	} else {
+		value = strings.Join(depParts, "  ")
+	}
+
+	indicator := ""
+	if active {
+		indicator = Dimmed.Render("  enter to add · backspace to remove last")
+	}
+
+	return fmt.Sprintf("%s  %s%s\n", l, value, indicator)
+}
+
+func renderPicker(p model.Picker) string {
+	filtered := p.Filtered()
+	if len(filtered) == 0 {
+		return pickerOverlay.Render(Dimmed.Render("  no matches"))
+	}
+
+	var rows []string
+	if p.Filter != "" {
+		rows = append(rows, Dimmed.Render("  filter: ")+p.Filter)
+	}
+
+	for i, opt := range filtered {
+		var line string
+		if i == p.Cursor {
+			line = pickerSelected.Render(fmt.Sprintf("▶ %s", opt))
+		} else {
+			line = pickerNormal.Render(fmt.Sprintf("  %s", opt))
+		}
+		rows = append(rows, line)
+	}
+
+	return pickerOverlay.Render(strings.Join(rows, "\n"))
 }
 
 func renderChainProgress(ids []string) string {
@@ -72,11 +171,4 @@ func renderChainProgress(ids []string) string {
 		parts[i] = chainItem.Render(id)
 	}
 	return "  Chain: " + strings.Join(parts, Dimmed.Render(" → ")) + Dimmed.Render(" → [next]")
-}
-
-func fieldValue(f model.FormState, index int) string {
-	if index < len(f.Fields) {
-		return f.Fields[index]
-	}
-	return ""
 }

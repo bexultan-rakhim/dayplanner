@@ -1,6 +1,8 @@
 package model
 
 import (
+	"strings"
+
 	"dayplanner/internal/domain"
 	"dayplanner/internal/graph"
 	"dayplanner/internal/history"
@@ -17,12 +19,64 @@ const (
 	PageTaskView
 )
 
+type PickerKind int
+
+const (
+	PickerNone     PickerKind = iota
+	PickerPriority
+	PickerDeps
+)
+
+type Picker struct {
+	Kind    PickerKind
+	Filter  string
+	Cursor  int
+	Options []string
+}
+
+func (p Picker) Filtered() []string {
+	if p.Filter == "" {
+		return p.Options
+	}
+	filter := strings.ToLower(p.Filter)
+	var out []string
+	for _, o := range p.Options {
+		if strings.Contains(strings.ToLower(o), filter) {
+			out = append(out, o)
+		}
+	}
+	return out
+}
+
+type FormField int
+
+const (
+	FieldTag      FormField = iota
+	FieldName
+	FieldPriority
+	FieldGoal
+	FieldDeps
+	FieldNotes
+	FieldCount
+)
+
 type FormState struct {
-	Fields     []string
-	FocusIndex int
+	Tag       string
+	Name      string
+	Priority  domain.Priority
+	Goal      string
+	DependsOn []string
+	Notes     string
+
+	FocusIndex FormField
+	Picker     Picker
 	ChainIDs   []string
 	IsChain    bool
 	EditingID  string
+}
+
+func (f FormState) PickerOpen() bool {
+	return f.Picker.Kind != PickerNone
 }
 
 type Model struct {
@@ -39,8 +93,7 @@ type Model struct {
 
 	Width  int
 	Height int
-
-	Err error
+	Err    error
 }
 
 func New(repo repository.Repository) (Model, error) {
@@ -48,7 +101,6 @@ func New(repo repository.Repository) (Model, error) {
 	if err != nil {
 		return Model{}, err
 	}
-
 	m := Model{
 		Page:    PageDashboard,
 		Tasks:   tasks,
@@ -104,4 +156,14 @@ func (m Model) WithError(err error) Model {
 func (m Model) ClearError() Model {
 	m.Err = nil
 	return m
+}
+
+func (m Model) OtherTaskIDs(excludeID string) []string {
+	out := make([]string, 0, len(m.Tasks))
+	for _, t := range m.Tasks {
+		if t.ID != excludeID {
+			out = append(out, t.ID)
+		}
+	}
+	return out
 }
