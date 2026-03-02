@@ -37,6 +37,9 @@ type Model struct {
 	ActiveTaskID string
 	Form         FormState
 
+	Width  int
+	Height int
+
 	Err error
 }
 
