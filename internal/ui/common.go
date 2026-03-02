@@ -7,7 +7,7 @@ import (
 )
 
 func RenderHeader(title string) string {
-	return Header.Render(title)
+	return Header.Render(title) + "\n"
 }
 
 func RenderFooter(page model.Page) string {

@@ -111,14 +111,44 @@ func New(repo repository.Repository) (Model, error) {
 }
 
 func (m Model) RebuildGraph() Model {
-	g, err := graph.Build(m.Tasks)
-	if err != nil {
-		m.Err = err
-		return m
-	}
-	m.Graph = g
-	m.Scheduled = scheduler.Order(m.Tasks, g)
-	return m
+    g, err := graph.Build(m.Tasks)
+    if err != nil {
+        m.Err = err
+        return m
+    }
+    m.Graph = g
+    m.Tasks = syncBlockedStatus(m.Tasks, g)
+    m.Scheduled = scheduler.Order(m.Tasks, g)
+    return m
+}
+
+func syncBlockedStatus(tasks []domain.Task, g *graph.Graph) []domain.Task {
+    doneSet := make(map[string]bool, len(tasks))
+    for _, t := range tasks {
+        if t.Status == domain.StatusDone {
+            doneSet[t.ID] = true
+        }
+    }
+
+    updated := make([]domain.Task, len(tasks))
+    copy(updated, tasks)
+
+    for i, t := range updated {
+        if t.Status == domain.StatusInProgress || t.Status == domain.StatusDone {
+            continue
+        }
+        deps := g.Blocking(t.ID)
+        isBlocked := false
+        for _, dep := range deps {
+            if !doneSet[dep] {
+                isBlocked = true
+                break
+            }
+        }
+        updated[i].SetBlocked(isBlocked)
+    }
+
+    return updated
 }
 
 func (m Model) TaskByID(id string) (domain.Task, bool) {
