@@ -63,7 +63,7 @@ func RenderAddEdit(m model.Model) string {
 	if m.Form.IsChain {
 		title += "  (chain mode)"
 	}
-	b.WriteString(RenderHeader(title))
+	b.WriteString(RenderHeader(title, m.Width))
 
 	if m.Form.IsChain && len(m.Form.ChainIDs) > 0 {
 		b.WriteString(renderChainProgress(m.Form.ChainIDs) + "\n\n")
@@ -84,7 +84,7 @@ func RenderAddEdit(m model.Model) string {
 		b.WriteString("\n" + RenderError(m.Err) + "\n")
 	}
 
-	b.WriteString(RenderFooter(model.PageAddEdit))
+	b.WriteString(RenderFooter(model.PageAddEdit, m.Width))
 	return b.String()
 }
 

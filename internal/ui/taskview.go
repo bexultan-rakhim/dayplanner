@@ -10,12 +10,12 @@ import (
 func RenderTaskView(m model.Model) string {
 	var b strings.Builder
 
-	b.WriteString(RenderHeader("Task"))
+	b.WriteString(RenderHeader("Task", m.Width))
 
 	task, ok := m.TaskByID(m.ActiveTaskID)
 	if !ok {
 		b.WriteString(ErrorStyle.Render("task not found: " + m.ActiveTaskID))
-		b.WriteString(RenderFooter(model.PageTaskView))
+		b.WriteString(RenderFooter(model.PageTaskView, m.Width))
 		return b.String()
 	}
 
@@ -74,7 +74,7 @@ func RenderTaskView(m model.Model) string {
 		}
 	}
 
-	b.WriteString(RenderFooter(model.PageTaskView))
+	b.WriteString(RenderFooter(model.PageTaskView, m.Width))
 	return b.String()
 }
 

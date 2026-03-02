@@ -11,7 +11,7 @@ import (
 func RenderDashboard(m model.Model) string {
 	var b strings.Builder
 
-	b.WriteString(RenderHeader("DayPlanner"))
+	b.WriteString(RenderHeader("DayPlanner", m.Width))
 
 	if m.Err != nil {
 		b.WriteString(RenderError(m.Err) + "\n")
@@ -23,7 +23,7 @@ func RenderDashboard(m model.Model) string {
 	b.WriteString(renderSection("BLOCKED", blocked, m, true))
 	b.WriteString(renderSection("DONE", done, m, false))
 
-	b.WriteString(RenderFooter(model.PageDashboard))
+	b.WriteString(RenderFooter(model.PageDashboard, m.Width))
 	return b.String()
 }
 

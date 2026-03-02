@@ -17,11 +17,11 @@ const (
 
 func RenderGraphView(m model.Model) string {
 	var b strings.Builder
-	b.WriteString(RenderHeader("Dependency Graph"))
+	b.WriteString(RenderHeader("Dependency Graph", m.Width))
 
 	if m.Graph == nil || len(m.Tasks) == 0 {
 		b.WriteString(Dimmed.Render("  No tasks yet.") + "\n")
-		b.WriteString(RenderFooter(model.PageGraph))
+		b.WriteString(RenderFooter(model.PageGraph, m.Width))
 		return b.String()
 	}
 
@@ -62,7 +62,7 @@ func RenderGraphView(m model.Model) string {
 		b.WriteString("\n" + Dimmed.Render("critical: "+strings.Join(criticalPath, " → ")) + "\n")
 	}
 
-	b.WriteString(RenderFooter(model.PageGraph))
+	b.WriteString(RenderFooter(model.PageGraph, m.Width))
 	return b.String()
 }
 
