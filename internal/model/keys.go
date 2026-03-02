@@ -34,12 +34,12 @@ func DefaultKeyMap() KeyMap {
 		Status:     key.NewBinding(key.WithKeys(" ")),
 		Graph:      key.NewBinding(key.WithKeys("g")),
 		Group:      key.NewBinding(key.WithKeys("G")),
-		Undo:       key.NewBinding(key.WithKeys("ctrl+z")),
-		Redo:       key.NewBinding(key.WithKeys("ctrl+y")),
+		Undo:       key.NewBinding(key.WithKeys("u")),
+		Redo:       key.NewBinding(key.WithKeys("ctrl+r")),
 		Quit:       key.NewBinding(key.WithKeys("q", "ctrl+c")),
 		NextField:  key.NewBinding(key.WithKeys("tab")),
 		PrevField:  key.NewBinding(key.WithKeys("shift+tab")),
 		Confirm:    key.NewBinding(key.WithKeys("enter")),
-		Regenerate: key.NewBinding(key.WithKeys("ctrl+r")),
+		Regenerate: key.NewBinding(key.WithKeys("ctrl+d")),
 	}
 }

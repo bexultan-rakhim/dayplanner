@@ -50,12 +50,12 @@ func footerHints(page model.Page) [][2]string {
     switch page {
     case model.PageDashboard:
         return [][2]string{
-            {"↑↓", "navigate"},
+            {"j/k", "navigate"},
             {"enter", "open"},
             {"space", "status"},
             {"n", "new"},
             {"g", "graph"},
-            {"ctrl+z", "undo"},
+            {"u", "undo"},
             {"q", "quit"},
         }
     case model.PageAddEdit:
@@ -67,12 +67,13 @@ func footerHints(page model.Page) [][2]string {
         }
     case model.PageGraph:
         return [][2]string{
-            {"↑↓", "navigate"},
+            {"j/k", "navigate"},
             {"enter", "open"},
             {"esc", "back"},
         }
     case model.PageTaskView:
         return [][2]string{
+
             {"e", "edit"},
             {"space", "status"},
             {"esc", "back"},
