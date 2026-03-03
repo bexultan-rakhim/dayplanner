@@ -53,7 +53,7 @@ func footerHints(page model.Page) [][2]string {
             {"j/k", "navigate"},
             {"enter", "open"},
             {"space", "status"},
-            {"n", "new"},
+            {"a", "new"},
             {"g", "graph"},
             {"u", "undo"},
             {"q", "quit"},

@@ -45,6 +45,11 @@ var (
 
 	depRemove = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#F38BA8"))
+
+	fieldActiveBorder = lipgloss.NewStyle().
+				BorderStyle(lipgloss.NormalBorder()).
+				BorderBottom(true).
+				BorderForeground(lipgloss.Color("#89B4FA"))
 )
 
 var priorities = []string{
@@ -69,12 +74,19 @@ func RenderAddEdit(m model.Model) string {
 		b.WriteString(renderChainProgress(m.Form.ChainIDs) + "\n\n")
 	}
 
-	b.WriteString(renderFormField("Tag", m.Form.Tag, m.Form.FocusIndex == model.FieldTag, false))
-	b.WriteString(renderFormField("Name", m.Form.Name, m.Form.FocusIndex == model.FieldName, false))
+	editing := m.Form.FieldEditing
+	b.WriteString(renderFormField("Tag", m.Form.Tag, m.Form.FocusIndex == model.FieldTag, false, editing))
+	b.WriteString(renderFormField("Name", m.Form.Name, m.Form.FocusIndex == model.FieldName, false, editing))
 	b.WriteString(renderPriorityField(m))
-	b.WriteString(renderFormField("Goal", m.Form.Goal, m.Form.FocusIndex == model.FieldGoal, false))
+	b.WriteString(renderFormField("Goal", m.Form.Goal, m.Form.FocusIndex == model.FieldGoal, false, editing))
 	b.WriteString(renderDepsField(m))
-	b.WriteString(renderFormField("Notes", m.Form.Notes, m.Form.FocusIndex == model.FieldNotes, false))
+	b.WriteString(renderFormField("Notes", m.Form.Notes, m.Form.FocusIndex == model.FieldNotes, false, editing))
+
+	if editing {
+		b.WriteString("\n" + Dimmed.Render("  esc · stop editing") + "\n")
+	} else {
+		b.WriteString("\n" + Dimmed.Render("  j/k · navigate   i · edit/open   enter · save") + "\n")
+	}
 
 	if m.Form.PickerOpen() {
 		b.WriteString("\n" + renderPicker(m.Form.Picker))
@@ -88,14 +100,16 @@ func RenderAddEdit(m model.Model) string {
 	return b.String()
 }
 
-func renderFormField(label, value string, active, readonly bool) string {
+func renderFormField(label, value string, active, readonly, editing bool) string {
 	l := fieldLabel.Render(label + ":")
 	var v string
 	switch {
 	case readonly:
 		v = fieldInactive.Render(value)
-	case active:
+	case active && editing:
 		v = fieldActive.Render(value + "█")
+	case active:
+		v = fieldActive.Render(value)
 	default:
 		v = fieldInactive.Render(value)
 	}
@@ -112,7 +126,8 @@ func renderPriorityField(m model.Model) string {
 	l := fieldLabel.Render("Priority:")
 	indicator := ""
 	if active {
-		indicator = Dimmed.Render("  enter to open")
+		badge = fieldActiveBorder.Render(badge)
+		indicator = Dimmed.Render("  i · open")
 	}
 	return fmt.Sprintf("%s  %s%s\n", l, badge, indicator)
 }
@@ -133,9 +148,13 @@ func renderDepsField(m model.Model) string {
 		value = strings.Join(depParts, "  ")
 	}
 
+	if active {
+		value = fieldActiveBorder.Render(value)
+	}
+
 	indicator := ""
 	if active {
-		indicator = Dimmed.Render("  enter to add · backspace to remove last")
+		indicator = Dimmed.Render("  i · add · backspace to remove last")
 	}
 
 	return fmt.Sprintf("%s  %s%s\n", l, value, indicator)

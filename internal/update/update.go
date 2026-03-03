@@ -29,7 +29,7 @@ func Update(m model.Model, msg tea.Msg) (model.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		km := model.DefaultKeyMap()
-		if key.Matches(msg, km.Quit) && !m.Form.PickerOpen() {
+		if key.Matches(msg, km.Quit) && !m.Form.PickerOpen() && !m.Form.FieldEditing {
 			return m, tea.Quit
 		}
 		if key.Matches(msg, km.Undo) && m.Page != model.PageAddEdit {
@@ -107,38 +107,49 @@ func handleTaskView(m model.Model, msg tea.KeyMsg, km model.KeyMap) (model.Model
 }
 
 func handleAddEdit(m model.Model, msg tea.KeyMsg, km model.KeyMap) (model.Model, tea.Cmd) {
+	// Edit mode: characters go to the active field; esc/enter exits edit mode.
+	if m.Form.FieldEditing {
+		switch {
+		case key.Matches(msg, km.Back), key.Matches(msg, km.Confirm):
+			m.Form.FieldEditing = false
+		case msg.Type == tea.KeyBackspace:
+			m = handleBackspace(m)
+		case msg.Type == tea.KeyRunes:
+			m = appendToActiveField(m, string(msg.Runes))
+		case msg.Type == tea.KeySpace:
+			m = appendToActiveField(m, " ")
+		}
+		return m, nil
+	}
+
+	// Navigation mode: j/k move between fields; i starts editing or opens picker; enter submits.
 	switch {
 	case key.Matches(msg, km.Back):
 		m = m.WithPage(model.PageDashboard)
 		m.Form = model.FormState{}
 
-	case key.Matches(msg, km.NextField):
+	case key.Matches(msg, km.Down):
 		if m.Form.FocusIndex < model.FieldCount-1 {
 			m.Form.FocusIndex++
 		}
 
-	case key.Matches(msg, km.PrevField):
+	case key.Matches(msg, km.Up):
 		if m.Form.FocusIndex > 0 {
 			m.Form.FocusIndex--
 		}
 
-	case key.Matches(msg, km.Confirm):
+	case key.Matches(msg, km.EditField):
 		switch m.Form.FocusIndex {
 		case model.FieldPriority:
 			m = openPriorityPicker(m)
 		case model.FieldDeps:
 			m = openDepsPicker(m)
-		case model.FieldNotes:
-			return handleFormSubmit(m)
 		default:
-			m.Form.FocusIndex++
+			m.Form.FieldEditing = true
 		}
 
-	case msg.Type == tea.KeyBackspace:
-		m = handleBackspace(m)
-
-	case msg.Type == tea.KeyRunes:
-		m = appendToActiveField(m, string(msg.Runes))
+	case key.Matches(msg, km.Confirm):
+		return handleFormSubmit(m)
 	}
 
 	return m, nil
@@ -439,6 +450,7 @@ func taskToForm(task domain.Task) model.FormState {
 func containsStr(slice []string, s string) bool {
 	return slices.Contains(slice, s)
 }
+
 
 func slugify(name string) string {
 	out := make([]byte, 0, len(name))

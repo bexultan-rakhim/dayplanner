@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
+
 	"dayplanner/internal/domain"
 	"dayplanner/internal/model"
 )
@@ -21,7 +23,7 @@ func RenderDashboard(m model.Model) string {
 
 	b.WriteString(renderSection("READY NOW", ready, m, true))
 	b.WriteString(renderSection("BLOCKED", blocked, m, true))
-	b.WriteString(renderSection("DONE", done, m, false))
+	b.WriteString(renderSection("DONE", done, m, true))
 
 	b.WriteString(RenderFooter(model.PageDashboard, m.Width))
 	return b.String()
@@ -64,15 +66,26 @@ func renderTaskRow(t domain.Task, m model.Model, showCursor bool) string {
 	selected, _ := m.SelectedTask()
 	isSelected := showCursor && selected.ID == t.ID
 
-	id := TagBadge(t.Tag) + Dimmed.Render("-"+idSlug(t.ID))
-	badges := StatusBadge(string(t.Status)) + " " + PriorityBadge(string(t.Priority))
-	name := t.Name
+	const idWidth = 30
+	const statusWidth = 15
+	const priorityWidth = 10
 
+	slug := idSlug(t.ID)
+	if len(slug) > idWidth-8 {
+		slug = slug[:(idWidth-8)]
+	}
+	idStr := TagBadge(t.Tag) + Dimmed.Render("-"+slug)
+	idCol := lipgloss.NewStyle().Width(idWidth).MaxWidth(idWidth).Render(idStr)
+
+	statusCol := lipgloss.NewStyle().Width(statusWidth).MaxWidth(statusWidth).Render(StatusBadge(string(t.Status)))
+	priorityCol := lipgloss.NewStyle().Width(priorityWidth).MaxWidth(priorityWidth).Render(PriorityBadge(string(t.Priority)))
+
+	name := t.Name
 	if t.Status == domain.StatusDone {
 		name = DoneStyle.Render(name)
 	}
 
-	line := fmt.Sprintf("  %-30s %-28s %s", id, badges, name)
+	line := "  " + idCol + statusCol + priorityCol + name
 
 	if isSelected {
 		return Selected.Render(line) + "\n"

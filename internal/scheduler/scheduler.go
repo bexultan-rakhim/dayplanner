@@ -26,6 +26,12 @@ func Order(tasks []domain.Task, g *graph.Graph) []domain.Task {
 	sort.SliceStable(ordered, func(i, j int) bool {
 		a, b := ordered[i], ordered[j]
 
+		aDone := a.Status == domain.StatusDone
+		bDone := b.Status == domain.StatusDone
+		if aDone != bDone {
+			return !aDone
+		}
+
 		if layerOf[a.ID] != layerOf[b.ID] {
 			return layerOf[a.ID] < layerOf[b.ID]
 		}

@@ -59,8 +59,8 @@ func TestAdvanceStatus(t *testing.T) {
 	}
 
 	task.AdvanceStatus()
-	if task.Status != StatusDone {
-		t.Errorf("done should be terminal, got %q", task.Status)
+	if task.Status != StatusTodo {
+		t.Errorf("done should cycle back to todo, got %q", task.Status)
 	}
 }
 
@@ -69,8 +69,8 @@ func TestAdvanceStatus_FromBlocked(t *testing.T) {
 	task.Status = StatusBlocked
 
 	task.AdvanceStatus()
-	if task.Status != StatusInProgress {
-		t.Errorf("expected in-progress from blocked, got %q", task.Status)
+	if task.Status != StatusBlocked {
+		t.Errorf("blocked should be ignored by AdvanceStatus, got %q", task.Status)
 	}
 }
 

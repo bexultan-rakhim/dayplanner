@@ -105,8 +105,11 @@ func (t *Task) AdvanceStatus() {
 		t.Status = StatusInProgress
 	case StatusInProgress:
 		t.Status = StatusDone
+	case StatusDone:
+		t.Status = StatusTodo
 	case StatusBlocked:
-		t.Status = StatusInProgress
+		// blocked status is managed automatically; ignore manual toggle
+		return
 	}
 	t.UpdatedAt = time.Now().UTC()
 }

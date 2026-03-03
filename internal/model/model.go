@@ -68,11 +68,12 @@ type FormState struct {
 	DependsOn []string
 	Notes     string
 
-	FocusIndex FormField
-	Picker     Picker
-	ChainIDs   []string
-	IsChain    bool
-	EditingID  string
+	FocusIndex   FormField
+	FieldEditing bool
+	Picker       Picker
+	ChainIDs     []string
+	IsChain      bool
+	EditingID    string
 }
 
 func (f FormState) PickerOpen() bool {
@@ -134,7 +135,7 @@ func syncBlockedStatus(tasks []domain.Task, g *graph.Graph) []domain.Task {
     copy(updated, tasks)
 
     for i, t := range updated {
-        if t.Status == domain.StatusInProgress || t.Status == domain.StatusDone {
+        if t.Status == domain.StatusDone {
             continue
         }
         deps := g.Blocking(t.ID)
@@ -145,7 +146,11 @@ func syncBlockedStatus(tasks []domain.Task, g *graph.Graph) []domain.Task {
                 break
             }
         }
-        updated[i].SetBlocked(isBlocked)
+        if isBlocked {
+            updated[i].Status = domain.StatusBlocked
+        } else if t.Status == domain.StatusBlocked {
+            updated[i].Status = domain.StatusTodo
+        }
     }
 
     return updated

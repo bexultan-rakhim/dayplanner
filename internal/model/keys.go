@@ -18,7 +18,8 @@ type KeyMap struct {
 	Quit     key.Binding
 	NextField key.Binding
 	PrevField key.Binding
-	Confirm  key.Binding
+	Confirm    key.Binding
+	EditField  key.Binding
 	Regenerate key.Binding
 }
 
@@ -28,7 +29,7 @@ func DefaultKeyMap() KeyMap {
 		Down:       key.NewBinding(key.WithKeys("down", "j")),
 		Select:     key.NewBinding(key.WithKeys("enter")),
 		Back:       key.NewBinding(key.WithKeys("esc")),
-		New:        key.NewBinding(key.WithKeys("n")),
+		New:        key.NewBinding(key.WithKeys("a")),
 		Edit:       key.NewBinding(key.WithKeys("e")),
 		Delete:     key.NewBinding(key.WithKeys("d")),
 		Status:     key.NewBinding(key.WithKeys(" ")),
@@ -40,6 +41,7 @@ func DefaultKeyMap() KeyMap {
 		NextField:  key.NewBinding(key.WithKeys("tab")),
 		PrevField:  key.NewBinding(key.WithKeys("shift+tab")),
 		Confirm:    key.NewBinding(key.WithKeys("enter")),
+		EditField:  key.NewBinding(key.WithKeys("i")),
 		Regenerate: key.NewBinding(key.WithKeys("ctrl+d")),
 	}
 }
