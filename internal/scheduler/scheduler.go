@@ -26,22 +26,36 @@ func Order(tasks []domain.Task, g *graph.Graph) []domain.Task {
 	sort.SliceStable(ordered, func(i, j int) bool {
 		a, b := ordered[i], ordered[j]
 
-		aDone := a.Status == domain.StatusDone
-		bDone := b.Status == domain.StatusDone
-		if aDone != bDone {
-			return !aDone
+		if a.Status != b.Status {
+			return priorityStatus(a.Status) < priorityStatus(b.Status)
+		}
+
+		if a.Priority != b.Priority {
+			return priorityRank(a.Priority) < priorityRank(b.Priority)
 		}
 
 		if layerOf[a.ID] != layerOf[b.ID] {
 			return layerOf[a.ID] < layerOf[b.ID]
 		}
-		if a.Priority != b.Priority {
-			return priorityRank(a.Priority) < priorityRank(b.Priority)
-		}
 		return a.CreatedAt.Before(b.CreatedAt)
 	})
 
 	return ordered
+}
+
+func priorityStatus(s domain.Status) int {
+	switch s {
+	case domain.StatusInProgress:
+		return 0
+	case domain.StatusTodo:
+		return 1
+	case domain.StatusBlocked:
+		return 2
+	case domain.StatusDone:
+		return 3
+	default:
+		return 0
+	}
 }
 
 func priorityRank(p domain.Priority) int {
